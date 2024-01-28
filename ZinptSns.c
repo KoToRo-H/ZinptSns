@@ -13,6 +13,8 @@
 #define KEY_BIT_SENS  (0x00000001) /* キーのビット位置情報を検出 */
 #define KEY_GRP_NUM   (16) /* キーグループの数 */
 #define KEY_BIT_NUM   ( 8) /* キー情報のビット数 */
+#define KEY_SNS_ON    (1)  /* キー押下フラグON */
+#define KEY_SNS_OFF   (0)  /* キー押下フラグOFF */
 
 #define JOY_NO_1      (0) /* ジョイスティック1 */
 #define JOY_NO_2      (1) /* ジョイスティック2 */
@@ -42,7 +44,7 @@ char *key_map[KEY_GRP_NUM][KEY_BIT_NUM] = {
   /* 4 */ {"D", "F", "G", "H", "J", "K", "L", ";"},
   /* 5 */ {":", "]", "Z", "X", "C", "V", "B", "N"},
   /* 6 */ {"M", ",", ".", "/", "_", "SP", "HOME", "DEL"},
-  /* 7 */ {"Roll up", "Roll down", "UNDO", "←", "↑", "→", "↓", "CLR"},
+  /* 7 */ {"Rollup", "Rolldown", "UNDO", "←", "↑", "→", "↓", "CLR"},
   /* 8 */ {"(/)", "(*)", "(-)", "(7)", "(8)", "(9)", "(+)", "(4)"},
   /* 9 */ {"(5)", "(6)", "(=)", "(1)", "(2)", "(3)", "ENTER", "(0)"},
   /* A */ {"(,)", "(.)", "記号", "登録", "HELP", "XF1", "XF2", "XF3"},
@@ -78,6 +80,7 @@ void keyFlash() {
 int keySens()
 {
 	int key_code, key_group, key_bit;
+	int keySnsFlag = 0; /* キー押下フラグ */
 
 	keyFlash(); /* キーを空読み */
 
@@ -91,34 +94,41 @@ int keySens()
 			}
 
 			/* 異なるキーが押されたのでキー情報を更新 */
-			key_grup_tmp = key_group;
-			key_code_tmp = key_code;
+			if (keySnsFlag == KEY_SNS_OFF) {
+				keySnsFlag = KEY_SNS_ON; /* キー押下フラグON */
 
-			/* キー情報の表示 */
-			printf("key_group=%02X ", key_group);
-			printf("key_code=%02X ", key_code);
+				/* 最初に見つかったキーコードを保存 */
+				key_grup_tmp = key_group;
+				key_code_tmp = key_code;
+
+				/* キー情報の表示 */
+				printf("key_group=%02X ", key_group);
+				printf("key_code=%02X ", key_code);
+			}
 
 			for (key_bit = 0; key_bit <= KEY_BIT_NUM; key_bit++) {
 				if ((key_code & KEY_BIT_MASK) == KEY_BIT_SENS) {
 					/* 対応キーを検出した */
-					printf("[%s]\n", key_map[key_group][key_bit]);
+					printf("[%s]", key_map[key_group][key_bit]);
 
 					/* 対応キーを検出したのでキー情報を更新 */
 					key_bit_tmp  = key_bit;
-
-					break;
 				}
 				key_code >>= 1; /* 右シフトで次のbitをLSB側へ */
 			}
-
-			return scanCode(key_group, key_bit); /* スキャンコードで返す */
 		}
 	}
 
-	/* キーが離された */
-	key_grup_tmp = 0x00;
-	key_code_tmp = 0x00;
-	key_bit_tmp  = 0x00;
+	if (keySnsFlag == KEY_SNS_ON) {
+		putchar('\n');
+	}
+	else {
+		/* キーが離された */
+		key_grup_tmp = 0x00;
+		key_code_tmp = 0x00;
+		key_bit_tmp  = 0x00;
+	}
+
 	return scanCode(key_grup_tmp, key_bit_tmp); /* スキャンコードで返す */
 }
 
