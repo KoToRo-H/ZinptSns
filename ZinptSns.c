@@ -80,41 +80,42 @@ void keyFlash() {
 int keySens()
 {
 	int key_code, key_group, key_bit;
-	int keySnsFlag = 0; /* キー押下フラグ */
+	int key_code_work; /* key_code作業用変数 */
+	int keySnsFlag = KEY_SNS_OFF; /* キー押下フラグ */
 
 	keyFlash(); /* キーを空読み */
 
 	for (key_group = 0; key_group < KEY_GRP_NUM; key_group++) {
 		key_code = BITSNS(key_group); /* 入力状態の読み出し */
-
 		if (key_code != 0) { /* 対応キーのビットが1 → 入力あり */
+
 			/* 同じキーを押し続けているのかを確認 */
 			if (key_group == key_grup_tmp && key_code == key_code_tmp) {
 				return scanCode(key_grup_tmp, key_bit_tmp); /* 同じキーなので終了 */
 			}
 
-			/* 異なるキーが押されたのでキー情報を更新 */
-			if (keySnsFlag == KEY_SNS_OFF) {
-				keySnsFlag = KEY_SNS_ON; /* キー押下フラグON */
-
-				/* 最初に見つかったキーコードを保存 */
-				key_grup_tmp = key_group;
-				key_code_tmp = key_code;
-
-				/* キー情報の表示 */
-				printf("key_group=%02X ", key_group);
-				printf("key_code=%02X ", key_code);
-			}
-
-			for (key_bit = 0; key_bit <= KEY_BIT_NUM; key_bit++) {
-				if ((key_code & KEY_BIT_MASK) == KEY_BIT_SENS) {
+			key_code_work = key_code;
+			for (key_bit = 0; key_bit < KEY_BIT_NUM; key_bit++) {
+				if ((key_code_work & KEY_BIT_MASK) == KEY_BIT_SENS) {
 					/* 対応キーを検出した */
-					printf("[%s]", key_map[key_group][key_bit]);
 
-					/* 対応キーを検出したのでキー情報を更新 */
-					key_bit_tmp  = key_bit;
+					/* 異なるキーが押されたのでキー情報を更新 */
+					if (keySnsFlag == KEY_SNS_OFF) {
+						keySnsFlag = KEY_SNS_ON; /* キー押下フラグON */
+
+						/* キー情報の表示 */
+						printf("key_group=%02X ", key_group);
+						printf("key_code=%02X ", key_code);
+
+						/* 最初に見つかったキー情報を保存 */
+						key_grup_tmp = key_group;
+						key_code_tmp = key_code;
+						key_bit_tmp  = key_bit;
+					}
+
+					printf("[%s]", key_map[key_group][key_bit]);
 				}
-				key_code >>= 1; /* 右シフトで次のbitをLSB側へ */
+				key_code_work >>= 1; /* 右シフトで次のbitをLSB側へ */
 			}
 		}
 	}
