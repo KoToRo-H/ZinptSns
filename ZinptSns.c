@@ -55,6 +55,9 @@ char *key_map[KEY_GRP_NUM][KEY_BIT_NUM] = {
   /* F */ {"未定義", "未定義", "未定義", "未定義", "未定義", "未定義", "未定義", "未定義"}
 };
 
+int key_code_tmp_d[KEY_GRP_NUM] /* 押されたキーコードを記憶 */
+	= {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
 /* ジョイスティックボタン*/
 char *joy_button[JOY_BTN_NUM] = {"上", "下", "左", "右", "", "Aボタン", "Bボタン", ""};
 
@@ -81,42 +84,50 @@ int keySens()
 {
 	int key_code, key_group, key_bit;
 	int key_code_work; /* key_code作業用変数 */
-	int keySnsFlag = KEY_SNS_OFF; /* キー押下フラグ */
+	int keySnsFlag;    /* キー押下フラグ */
 
 	keyFlash(); /* キーを空読み */
 
+	/* キー押下の検出 */
+	keySnsFlag = KEY_SNS_OFF; /* キー押下フラグをクリア */
 	for (key_group = 0; key_group < KEY_GRP_NUM; key_group++) {
 		key_code = BITSNS(key_group); /* 入力状態の読み出し */
-		if (key_code != 0) { /* 対応キーのビットが1 → 入力あり */
 
-			/* 同じキーを押し続けているのかを確認 */
-			if (key_group == key_grup_tmp && key_code == key_code_tmp) {
-				return scanCode(key_grup_tmp, key_bit_tmp); /* 同じキーなので終了 */
-			}
+		if (key_code != key_code_tmp_d[key_group]) {
+			/* 変更があったキー情報を保存 */
+			key_code_tmp_d[key_group] = key_code;
+			/* 異なるキーが押されたのでキー押下フラグを更新 */
+			keySnsFlag = KEY_SNS_ON; /* キー押下フラグON */
+		}
+	}
 
-			key_code_work = key_code;
-			for (key_bit = 0; key_bit < KEY_BIT_NUM; key_bit++) {
-				if ((key_code_work & KEY_BIT_MASK) == KEY_BIT_SENS) {
-					/* 対応キーを検出した */
+	/* 同じキーを押し続けているのかを確認 */
+	if (keySnsFlag == KEY_SNS_OFF) {
+		return scanCode(key_grup_tmp, key_bit_tmp); /* 同じキーなので終了 */
+	}
 
-					/* 異なるキーが押されたのでキー情報を更新 */
-					if (keySnsFlag == KEY_SNS_OFF) {
-						keySnsFlag = KEY_SNS_ON; /* キー押下フラグON */
+	/* 押されたキーの特定と表示 */
+	keySnsFlag = KEY_SNS_OFF; /* キー押下フラグをクリア */
+	for (key_group = 0; key_group < KEY_GRP_NUM; key_group++) {
 
-						/* キー情報の表示 */
-						printf("key_group=%02X ", key_group);
-						printf("key_code=%02X ", key_code);
+		key_code_work = key_code_tmp_d[key_group];
+		for (key_bit = 0; key_bit < KEY_BIT_NUM; key_bit++) {
+			if ((key_code_work & KEY_BIT_MASK) == KEY_BIT_SENS) {
 
-						/* 最初に見つかったキー情報を保存 */
-						key_grup_tmp = key_group;
-						key_code_tmp = key_code;
-						key_bit_tmp  = key_bit;
-					}
+				/* 対応キーを検出した */
+				if (keySnsFlag == KEY_SNS_OFF) {
+					printf("key_group=%02X ", key_group);
+					printf("key_code=%02X ", key_code_tmp_d[key_group]);
+					keySnsFlag = KEY_SNS_ON; /* キー押下フラグON */
 
-					printf("[%s]", key_map[key_group][key_bit]);
+					/* 最初に見つかったキー情報を保存 */
+					key_grup_tmp = key_group;
+					key_code_tmp = key_code_tmp_d[key_group];
+					key_bit_tmp  = key_bit;
 				}
-				key_code_work >>= 1; /* 右シフトで次のbitをLSB側へ */
+				printf("[%s]", key_map[key_group][key_bit]);
 			}
+			key_code_work >>= 1; /* 右シフトで次のbitをLSB側へ */
 		}
 	}
 
@@ -125,7 +136,6 @@ int keySens()
 	}
 	else {
 		/* キーが離された */
-		key_grup_tmp = 0x00;
 		key_code_tmp = 0x00;
 		key_bit_tmp  = 0x00;
 	}
