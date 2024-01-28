@@ -1,7 +1,7 @@
 /*
 	ZinptSns.c	キーボード、ジョイスティック、マウスのボタン情報を表示する
 	XCコンパイル ： cc /Y ZinptSns.c
-	GCCコンパイル： GCC -ldos -liocs ZinptSns.c
+	GCCコンパイル： gcc -ldos -liocs ZinptSns.c
 */
 
 #include <stdio.h>
