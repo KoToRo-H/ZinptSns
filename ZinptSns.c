@@ -12,7 +12,7 @@
 #define KEY_BIT_MASK  (0x00000001) /* キーのビット位置情報マスク */
 #define KEY_BIT_SENS  (0x00000001) /* キーのビット位置情報を検出 */
 #define KEY_GRP_NUM   (16) /* キーグループの数 */
-#define KEY_BIT_NUM   ( 8) /* キー情報のビット数 */
+#define KEY_BIT_NUM   (8)  /* キー情報のビット数 */
 #define KEY_SNS_ON    (1)  /* キー押下フラグON */
 #define KEY_SNS_OFF   (0)  /* キー押下フラグOFF */
 
